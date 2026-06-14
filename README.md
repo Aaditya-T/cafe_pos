@@ -203,6 +203,16 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 KDS_PIN=2468
 ```
 
+For GitHub Codespaces, set the URLs to the forwarded port URL, for example:
+
+```env
+AUTH_URL=https://<your-codespace>-3000.app.github.dev
+NEXT_PUBLIC_APP_URL=https://<your-codespace>-3000.app.github.dev
+AUTH_TRUST_HOST=true
+```
+
+`AUTH_TRUST_HOST` lets Auth.js trust the forwarded host. Next.js Server Actions also perform their own origin check; `next.config.ts` allows Codespaces domains by default, and `SERVER_ACTION_ALLOWED_ORIGINS` can add other tunnel/proxy hosts.
+
 Bootstrap data & run:
 
 ```bash
@@ -352,6 +362,8 @@ cloudflared tunnel --url http://localhost:3000
 ```
 
 Set `AUTH_URL` and `NEXT_PUBLIC_APP_URL` to the tunnel URL, add `AUTH_TRUST_HOST=true`, restart dev.
+
+If the tunnel uses a host that is not already in `next.config.ts`, add it to `SERVER_ACTION_ALLOWED_ORIGINS` without the protocol, for example `SERVER_ACTION_ALLOWED_ORIGINS=my-cafe.trycloudflare.com`.
 
 ---
 
