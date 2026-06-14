@@ -308,7 +308,19 @@ export async function getPosTableMap() {
 
 export async function getSessionOrders(sessionId: string) {
   return db.query.orders.findMany({
-    where: eq(orders.sessionId, sessionId),
+    where: and(eq(orders.sessionId, sessionId), ne(orders.status, "unapproved")),
+    with: {
+      customer: true,
+      table: true,
+      orderTables: { with: { table: { with: { floor: true } } } },
+    },
+    orderBy: [desc(orders.createdAt)],
+  });
+}
+
+export async function getPendingQrOrders() {
+  return db.query.orders.findMany({
+    where: eq(orders.status, "unapproved"),
     with: {
       customer: true,
       table: true,

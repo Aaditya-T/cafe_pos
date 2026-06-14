@@ -4,6 +4,10 @@ import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { DataTableShell } from "@/components/admin/data-table-shell";
 import { DeleteButton } from "@/components/admin/delete-button";
+import {
+  paginateRows,
+  TablePagination,
+} from "@/components/admin/table-pagination";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -20,6 +24,8 @@ import {
   type ProductFormValue,
 } from "./product-form-dialog";
 import { ProductStockToggle } from "./product-stock-toggle";
+
+const PAGE_SIZE = 12;
 
 export type ProductRow = ProductFormValue & {
   id: string;
@@ -48,6 +54,7 @@ export function ProductTable({
   toolbarActions,
 }: ProductTableProps) {
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const normalizedQuery = query.trim().toLowerCase();
   const filteredRows = useMemo(
     () =>
@@ -61,11 +68,21 @@ export function ProductTable({
         : rows,
     [normalizedQuery, rows],
   );
+  const { pageRows, currentPage } = paginateRows(
+    filteredRows,
+    page,
+    PAGE_SIZE,
+  );
+
+  function handleSearchChange(value: string) {
+    setQuery(value);
+    setPage(1);
+  }
 
   return (
     <DataTableShell
       searchValue={query}
-      onSearchChange={setQuery}
+      onSearchChange={handleSearchChange}
       searchPlaceholder="Search products..."
       toolbarActions={toolbarActions}
       empty={filteredRows.length === 0}
@@ -74,6 +91,14 @@ export function ProductTable({
         rows.length === 0
           ? "Create menu items for the POS terminal."
           : "Try another product or category."
+      }
+      footer={
+        <TablePagination
+          page={currentPage}
+          pageSize={PAGE_SIZE}
+          total={filteredRows.length}
+          onPageChange={setPage}
+        />
       }
     >
       <Table>
@@ -90,7 +115,7 @@ export function ProductTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredRows.map((row) => (
+          {pageRows.map((row) => (
             <TableRow
               key={row.id}
               className={row.isOutOfStock ? "bg-muted/30" : undefined}

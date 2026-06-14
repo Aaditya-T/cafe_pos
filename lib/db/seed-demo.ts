@@ -6,6 +6,7 @@ loadLocalEnv();
 import bcrypt from "bcryptjs";
 import { and, count, eq, like, lt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
 import {
   BULK_DEFAULTS,
@@ -22,7 +23,6 @@ import {
 import {
   replaceLegacySinglePromotion,
   seedPromotionsIfMissing,
-  type SeedDb,
 } from "./seed-demo/seed-promotions";
 import {
   createRng,
@@ -45,6 +45,8 @@ import {
 const BATCH_SIZE = 100;
 const force = process.argv.includes("--force");
 const bulk = process.argv.includes("--bulk");
+
+type DemoDb = NodePgDatabase<typeof schema>;
 
 function readArg(name: string, fallback: string) {
   const prefix = `--${name}=`;
@@ -74,7 +76,7 @@ function startOfToday() {
   return now;
 }
 
-async function hasExistingDemoData(db: SeedDb) {
+async function hasExistingDemoData(db: DemoDb) {
   const today = startOfToday();
   const [row] = await db
     .select({ value: count() })
@@ -88,7 +90,7 @@ async function hasExistingDemoData(db: SeedDb) {
   return Number(row?.value ?? 0) > 10;
 }
 
-async function wipeDemoTransactions(db: SeedDb) {
+async function wipeDemoTransactions(db: DemoDb) {
   console.log("Removing existing demo transactions...");
   await db.delete(schema.payments);
   await db.delete(schema.orderItems);
@@ -99,7 +101,7 @@ async function wipeDemoTransactions(db: SeedDb) {
     .where(like(schema.customers.email, `%${DEMO_CUSTOMER_EMAIL_DOMAIN}`));
 }
 
-async function ensureBaseSeed(db: SeedDb) {
+async function ensureBaseSeed(db: DemoDb) {
   const [product] = await db
     .select({ id: schema.products.id })
     .from(schema.products)
@@ -116,7 +118,7 @@ async function ensureBaseSeed(db: SeedDb) {
   }
 }
 
-async function seedFixtures(db: SeedDb) {
+async function seedFixtures(db: DemoDb) {
   const passwordHash = await bcrypt.hash(DEMO_EMPLOYEE_PASSWORD, 10);
   const employees = bulk
     ? [...DEMO_EMPLOYEES, ...generateBulkEmployees(employeeTarget)]
@@ -255,7 +257,7 @@ async function seedFixtures(db: SeedDb) {
   }
 }
 
-async function loadSeedContext(db: SeedDb): Promise<SeedContext> {
+async function loadSeedContext(db: DemoDb): Promise<SeedContext> {
   const products = await db.select().from(schema.products);
   const tables = await db.select().from(schema.tables);
   const employees = await db
@@ -306,7 +308,7 @@ async function loadSeedContext(db: SeedDb): Promise<SeedContext> {
 }
 
 async function insertGeneratedHistory(
-  db: SeedDb,
+  db: DemoDb,
   sessions: GeneratedSession[],
 ) {
   const allOrders = sessions.flatMap((session) => session.orders);
@@ -416,7 +418,7 @@ function printCheatSheet() {
 
 async function main() {
   const pool = createPgPool();
-  const db = drizzle(pool, { schema });
+  const db: DemoDb = drizzle(pool, { schema });
 
   console.log("Demo seed starting...");
   if (bulk) {

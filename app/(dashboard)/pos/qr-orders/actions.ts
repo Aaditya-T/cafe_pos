@@ -7,6 +7,7 @@ import { writeAuditLog } from "@/lib/audit";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
+import { getOpenSessionForUser } from "@/lib/pos/session";
 import {
   publishKdsChanged,
   publishReportsChanged,
@@ -31,9 +32,15 @@ export async function approveQrOrder(orderId: string): Promise<ActionResult> {
   });
   if (!limit.ok) return { ok: false, error: "QR approvals are rate limited." };
 
+  const session = await getOpenSessionForUser(user.id);
+  if (!session) {
+    return { ok: false, error: "Open a POS session before approving QR orders." };
+  }
+
   const [updated] = await db
     .update(orders)
     .set({
+      sessionId: session.id,
       status: "draft",
       employeeId: user.id,
       sentToKitchenAt: new Date(),

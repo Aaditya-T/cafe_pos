@@ -210,6 +210,7 @@ export function OrdersTable({ orders }: { orders: OrderRow[] }) {
               <TableHead>Amount</TableHead>
               <TableHead>Kitchen</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -250,6 +251,21 @@ export function OrdersTable({ orders }: { orders: OrderRow[] }) {
                   <Badge variant={statusVariant[order.status]}>
                     {statusLabel[order.status]}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    size="sm"
+                    variant={order.status === "unapproved" ? "default" : "outline"}
+                    nativeButton={false}
+                    render={
+                      <Link
+                        href={`/pos/orders/${order.id}`}
+                        onClick={(event) => event.stopPropagation()}
+                      />
+                    }
+                  >
+                    {order.status === "unapproved" ? "Review" : "View"}
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

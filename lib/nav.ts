@@ -26,7 +26,7 @@ export type NavItem = {
 
 /** POS terminal sections (formerly the top header nav). */
 export const posNav: NavItem[] = [
-  { label: "POS Orders", href: "/pos", icon: CupSoda },
+  { label: "POS Terminal", href: "/pos", icon: CupSoda },
   {
     label: "Takeaway",
     href: "/pos/takeaway",

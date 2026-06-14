@@ -153,7 +153,7 @@ export async function POST(request: Request) {
           .insert(orders)
           .values({
             orderNumber,
-            sessionId: session.id,
+            sessionId: null,
             tableId: table.id,
             fulfillmentType: "dine_in",
             customerId,
